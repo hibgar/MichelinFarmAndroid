@@ -13,6 +13,8 @@ public class GameManager : MonoBehaviour
     public Tilemap groundTilemap;
 
     public GameObject plantSeedsButton;
+    public GameObject waterPlantButton;
+    public GameObject harvestPlantButton;
     private GameObject activePopup;
 
     public Tilemap overlayTilemap;
@@ -32,6 +34,7 @@ public class GameManager : MonoBehaviour
     }
 
     private bool isPlanting = false;
+    private bool isWatering = false;
 
     private AudioSource audioSource;
     public AudioClip buttonClickSound;
@@ -42,6 +45,11 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         UserData userData = FileStorage.LoadData();
+        
+        // to clear the farm tile data
+        //userData.tileStates.Clear();
+        //FileStorage.SaveData(userData);
+        //Debug.Log("Tile data cleared!");
 
         tileStateToSprite = new Dictionary<TileState, Sprite>()
         {
@@ -59,7 +67,8 @@ public class GameManager : MonoBehaviour
 
         audioSource = gameObject.AddComponent<AudioSource>();
 
-        plantSeedsButton.GetComponentInChildren<Button>().onClick.AddListener(OnFarmButtonClick);
+        plantSeedsButton.GetComponentInChildren<Button>().onClick.AddListener(OnPlantButtonClick);
+        waterPlantButton.GetComponentInChildren<Button>().onClick.AddListener(OnWaterButtonClick);
     }
 
     // Update is called once per frame
@@ -79,7 +88,7 @@ public class GameManager : MonoBehaviour
     // Detects tile at touch position
     void DetectTileAtTouch(Vector2 screenPosition)
     {
-        if (!isPlanting) return;
+        if (!isPlanting && !isWatering) return;
 
         Vector3 worldPoint = Camera.main.ScreenToWorldPoint(screenPosition);
         worldPoint.z = 0; // Ensures we stay in the correct 2D plane
@@ -93,16 +102,20 @@ public class GameManager : MonoBehaviour
             // if user clicked on a farm tile
             if (tilePosition.x >= -2 && tilePosition.x <= 1 && tilePosition.y >= -2 && tilePosition.y <= 1)
             {
-                if (stars > 0)
+                if (stars > 0 && isPlanting)
                 {
                     ChangeTileSprite(tilePosition, TileState.Planted);
                     isPlanting = false;
                 }
-                
-                //ShowPopup(tilePosition, clickedTile);
-            } else {
+                else if (stars > 0 && isWatering)
+                {
+                    ChangeTileSprite(tilePosition, TileState.Watered);
+                    isWatering = false;
+                }
+            }  else {
                 Debug.Log("Clicked outside valid range!");
                 isPlanting = false;
+                isWatering = false;
                 //HidePopup();
             }
 
@@ -172,7 +185,7 @@ public class GameManager : MonoBehaviour
         if (buttonInPopup)
         {
             buttonInPopup.onClick.RemoveAllListeners();
-            buttonInPopup.onClick.AddListener(OnFarmButtonClick);
+            buttonInPopup.onClick.AddListener(OnPlantButtonClick);
         } 
 
     }
@@ -186,10 +199,20 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    void OnFarmButtonClick()
+    void OnPlantButtonClick()
     {
         Debug.Log("Button clicked!!!!!");
         isPlanting = true;
+
+        if (buttonClickSound != null) {
+            audioSource.PlayOneShot(buttonClickSound);
+        }
+    }
+
+    void OnWaterButtonClick()
+    {
+        Debug.Log("Button clicked!!!!!");
+        isWatering = true;
 
         if (buttonClickSound != null) {
             audioSource.PlayOneShot(buttonClickSound);
@@ -200,6 +223,12 @@ public class GameManager : MonoBehaviour
     {
         //Vector3 mousePos = Input.mousePosition;
         //GameObject PlusOnePopUp = Instantiate(plusOneStarPopUp, mousePos, new Quaternion());
+        if (stars + amount < 0)
+        {
+            Debug.Log("Not enough stars!");
+            return;
+        }
+
         stars += amount;
         FileStorage.UpdateStarsInJSON(stars);
         updateStarCountInUI();

@@ -597,7 +597,7 @@ GameObject:
   - component: {fileID: 387377648}
   - component: {fileID: 387377647}
   m_Layer: 5
-  m_Name: InteractWithFarmButton (1)
+  m_Name: InteractWithFarmButtonWater
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4470,8 +4470,12 @@ MonoBehaviour:
   stars: 0
   groundTilemap: {fileID: 741957293}
   plantSeedsButton: {fileID: 2872817329092855365}
+  waterPlantButton: {fileID: 387377645}
+  harvestPlantButton: {fileID: 1243054473}
   overlayTilemap: {fileID: 1683437717}
   seedPlantedSprite: {fileID: 6207357597143478473, guid: b52c581787c90afc4a268d03fa4e71c6, type: 3}
+  wateredSprite: {fileID: 4019762463916566667, guid: b52c581787c90afc4a268d03fa4e71c6, type: 3}
+  harvestReadySprite: {fileID: 1274787098040969861, guid: b52c581787c90afc4a268d03fa4e71c6, type: 3}
   buttonClickSound: {fileID: 8300000, guid: baf18f7b426690ccb942c9833e5640b3, type: 3}
 --- !u!4 &1117559410
 Transform:
@@ -4539,7 +4543,7 @@ GameObject:
   - component: {fileID: 1243054476}
   - component: {fileID: 1243054475}
   m_Layer: 5
-  m_Name: InteractWithFarmButton (2)
+  m_Name: InteractWithFarmButtonHarvest
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
