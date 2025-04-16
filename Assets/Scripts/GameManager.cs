@@ -36,6 +36,9 @@ public class GameManager : MonoBehaviour
     private bool isPlanting = false;
     private bool isWatering = false;
 
+    public bool showTutorial;
+    public GameObject[] tutorialPopUps;
+
     private AudioSource audioSource;
     public AudioClip buttonClickSound;
 
@@ -69,11 +72,25 @@ public class GameManager : MonoBehaviour
 
         plantSeedsButton.GetComponentInChildren<Button>().onClick.AddListener(OnPlantButtonClick);
         waterPlantButton.GetComponentInChildren<Button>().onClick.AddListener(OnWaterButtonClick);
+
+        if (showTutorial)
+        {
+            tutorialPopUps[0].SetActive(true);
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (showTutorial && (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began || Input.GetMouseButtonDown(0)))
+        {
+            foreach (GameObject popup in tutorialPopUps)
+            {
+                popup.SetActive(false);
+            }
+            audioSource.PlayOneShot(buttonClickSound);
+        }
+
         // Check for touch input (mobile) or mouse click (Editor)
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
         {
