@@ -17,6 +17,8 @@ public class GameManager : MonoBehaviour
     public GameObject harvestPlantButton;
     private GameObject activePopup;
 
+    public GameObject tasksPanel;
+
     public Tilemap overlayTilemap;
     public Sprite seedPlantedSprite;
     public Sprite wateredSprite;
@@ -35,9 +37,13 @@ public class GameManager : MonoBehaviour
 
     private bool isPlanting = false;
     private bool isWatering = false;
+    private bool tutorialStep2Shown = false;
+    private bool finalTutorialShown = false;
+
 
     public bool showTutorial;
     public GameObject[] tutorialPopUps;
+    UserData userData;
 
     private AudioSource audioSource;
     public AudioClip buttonClickSound;
@@ -47,12 +53,12 @@ public class GameManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        UserData userData = FileStorage.LoadData();
+        userData = FileStorage.LoadData();
         
         // to clear the farm tile data
-        //userData.tileStates.Clear();
-        //FileStorage.SaveData(userData);
-        //Debug.Log("Tile data cleared!");
+        userData.tileStates.Clear();
+        FileStorage.SaveData(userData);
+        Debug.Log("Tile data cleared!");
 
         tileStateToSprite = new Dictionary<TileState, Sprite>()
         {
@@ -82,25 +88,65 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // First: check if user tapped to dismiss tutorial popups
         if (showTutorial && (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began || Input.GetMouseButtonDown(0)))
         {
+            bool closedAny = false;
             foreach (GameObject popup in tutorialPopUps)
             {
-                popup.SetActive(false);
+                if (popup.activeSelf)
+                {
+                    popup.SetActive(false);
+                    closedAny = true;
+                }
             }
-            audioSource.PlayOneShot(buttonClickSound);
+
+            // If user just closed the final tutorial popup
+            if (finalTutorialShown && closedAny)
+            {
+                showTutorial = false;
+                Debug.Log("Tutorial fully completed!");
+            }
         }
 
-        // Check for touch input (mobile) or mouse click (Editor)
+        // Then: process tile interaction
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
         {
             DetectTileAtTouch(Input.GetTouch(0).position);
         }
-        else if (Input.GetMouseButtonDown(0)) // Mouse click (for testing in Editor)
+        else if (Input.GetMouseButtonDown(0))
         {
             DetectTileAtTouch(Input.mousePosition);
         }
+
+        // Step 2 tutorial
+        if (!tutorialStep2Shown && showTutorial && !tasksPanel.activeSelf && stars == 2)
+        {
+            tutorialPopUps[2].SetActive(true);
+            tutorialStep2Shown = true;
+        }
+
+        // Final tutorial step: show when watered
+        if (showTutorial && tutorialStep2Shown && stars == 0)
+        {
+            if (!tutorialPopUps[3].activeSelf)
+            {
+                UserData userData = FileStorage.LoadData();
+                foreach (TileData data in userData.tileStates)
+                {
+                    if (data.state == TileState.Watered)
+                    {
+                        tutorialPopUps[3].SetActive(true);
+                        finalTutorialShown = true; // ← Track that final popup was shown
+                        Debug.Log("Final tutorial popup shown.");
+                        break;
+                    }
+                }
+            }
+        }
     }
+
+
 
     // Detects tile at touch position
     void DetectTileAtTouch(Vector2 screenPosition)
@@ -152,7 +198,23 @@ public class GameManager : MonoBehaviour
         }
 
         currentTileStates[tilePosition] = state;
-        SaveTileStates();
+
+        UserData userData = FileStorage.LoadData();
+
+        TileData newTileData = new TileData
+        {
+            x = tilePosition.x,
+            y = tilePosition.y,
+            state = state,
+            plantedAt = (state == TileState.Planted) ? System.DateTime.UtcNow.ToString("o") : null
+        };
+
+        // Add or replace the tile data
+        userData.tileStates.RemoveAll(t => t.x == tilePosition.x && t.y == tilePosition.y);
+        userData.tileStates.Add(newTileData);
+
+        FileStorage.SaveData(userData);
+
 
         AddStars(-1);
     }
@@ -160,15 +222,17 @@ public class GameManager : MonoBehaviour
     void SaveTileStates()
     {
         UserData userData = FileStorage.LoadData();
-        userData.tileStates.Clear();
 
         foreach (var kvp in currentTileStates)
         {
+            userData.tileStates.RemoveAll(t => t.x == kvp.Key.x && t.y == kvp.Key.y);
+
             userData.tileStates.Add(new TileData
             {
                 x = kvp.Key.x,
                 y = kvp.Key.y,
-                state = kvp.Value
+                state = kvp.Value,
+                plantedAt = System.DateTime.Now.ToString()
             });
         }
 
@@ -181,6 +245,19 @@ public class GameManager : MonoBehaviour
         foreach (TileData data in userData.tileStates)
         {
             Vector3Int pos = new Vector3Int(data.x, data.y, 0);
+
+            if (data.state == TileState.Planted && !string.IsNullOrEmpty(data.plantedAt))
+            {
+                System.DateTime plantedTime;
+                if (System.DateTime.TryParse(data.plantedAt, null, System.Globalization.DateTimeStyles.RoundtripKind, out plantedTime))
+                {
+                    if ((System.DateTime.UtcNow - plantedTime).TotalHours >= 24)
+                    {
+                        data.state = TileState.HarvestReady;
+                    }
+                }
+            }
+            
             ChangeTileSprite(pos, data.state);
         }
     }
@@ -254,6 +331,16 @@ public class GameManager : MonoBehaviour
     public void updateStarCountInUI()
     {
         starCount.text = stars.ToString();
+    }
+
+    public void OpenTasksPanelAndMaybeTutorial()
+    {
+        tasksPanel.SetActive(true);
+
+        if (showTutorial && tutorialPopUps[1] != null)
+        {
+            tutorialPopUps[1].SetActive(true);
+        }
     }
 }
 

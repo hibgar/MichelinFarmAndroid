@@ -22,4 +22,5 @@ public class TileData
     public int x;
     public int y;
     public GameManager.TileState state;
+    public string plantedAt; // Store DateTime as string for JSON
 }
