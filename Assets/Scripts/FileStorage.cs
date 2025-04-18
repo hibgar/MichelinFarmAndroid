@@ -6,12 +6,10 @@ using System.Collections.Generic;
 public static class FileStorage
 {
     private static string filePath = Path.Combine(Application.persistentDataPath, "userData.json");
-    public static GameManager gameManager;
     public static UserData LoadData()
     {
         if (File.Exists(filePath))
         {
-            //FileStorage.gameManager.showTutorial = false;
             string json = File.ReadAllText(filePath);
             Debug.Log(filePath);
             return JsonUtility.FromJson<UserData>(json);
@@ -24,7 +22,6 @@ public static class FileStorage
             newUserData.starAmt = 0;
             newUserData.tileStates = GenerateDefaultTileStates();
             SaveData(newUserData);
-            //FileStorage.gameManager.showTutorial = true;
             return newUserData;
         }
     }

@@ -5122,7 +5122,7 @@ MonoBehaviour:
   seedPlantedSprite: {fileID: 6207357597143478473, guid: b52c581787c90afc4a268d03fa4e71c6, type: 3}
   wateredSprite: {fileID: 4019762463916566667, guid: b52c581787c90afc4a268d03fa4e71c6, type: 3}
   harvestReadySprite: {fileID: 1274787098040969861, guid: b52c581787c90afc4a268d03fa4e71c6, type: 3}
-  showTutorial: 1
+  showTutorial: 0
   tutorialPopUps:
   - {fileID: 1534601718}
   - {fileID: 1559236840}

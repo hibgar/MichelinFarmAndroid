@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.IO;
 using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps; 
 using System.Collections.Generic;
@@ -37,6 +38,7 @@ public class GameManager : MonoBehaviour
 
     private bool isPlanting = false;
     private bool isWatering = false;
+    private bool isHarvesting = false;
     private bool tutorialStep2Shown = false;
     private bool finalTutorialShown = false;
 
@@ -47,6 +49,10 @@ public class GameManager : MonoBehaviour
 
     private AudioSource audioSource;
     public AudioClip buttonClickSound;
+
+    private float checkTimer = 0f;
+    private float checkInterval = 5f; // Check every 5 seconds
+
 
     //public GameObject plusOneStarPopUp;
 
@@ -62,12 +68,16 @@ public class GameManager : MonoBehaviour
 
         tileStateToSprite = new Dictionary<TileState, Sprite>()
         {
+            { TileState.Empty, null},
             { TileState.Planted, seedPlantedSprite },
             { TileState.Watered, wateredSprite },
             { TileState.HarvestReady, harvestReadySprite }
         };
 
         LoadTileStates();
+
+        // Determine if needs first-time tutorial
+        showTutorial = File.Exists(Path.Combine(Application.persistentDataPath, "userData.json")) == false;
 
         stars = userData.starAmt;
         
@@ -76,8 +86,11 @@ public class GameManager : MonoBehaviour
 
         audioSource = gameObject.AddComponent<AudioSource>();
 
+        UpdateHarvestStates();
+
         plantSeedsButton.GetComponentInChildren<Button>().onClick.AddListener(OnPlantButtonClick);
         waterPlantButton.GetComponentInChildren<Button>().onClick.AddListener(OnWaterButtonClick);
+        harvestPlantButton.GetComponentInChildren<Button>().onClick.AddListener(OnHarvestButtonClick);
 
         if (showTutorial)
         {
@@ -144,6 +157,15 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+
+        // Check for crops ready to harvest
+        checkTimer += Time.deltaTime;
+        if (checkTimer >= checkInterval)
+        {
+            checkTimer = 0f;
+            UpdateHarvestStates();
+        }
+
     }
 
 
@@ -151,7 +173,7 @@ public class GameManager : MonoBehaviour
     // Detects tile at touch position
     void DetectTileAtTouch(Vector2 screenPosition)
     {
-        if (!isPlanting && !isWatering) return;
+        if (!isPlanting && !isWatering && !isHarvesting) return;
 
         Vector3 worldPoint = Camera.main.ScreenToWorldPoint(screenPosition);
         worldPoint.z = 0; // Ensures we stay in the correct 2D plane
@@ -165,21 +187,28 @@ public class GameManager : MonoBehaviour
             // if user clicked on a farm tile
             if (tilePosition.x >= -2 && tilePosition.x <= 1 && tilePosition.y >= -2 && tilePosition.y <= 1)
             {
-                if (stars > 0 && isPlanting)
+                currentTileStates.TryGetValue(tilePosition, out TileState currentState);
+
+                if (stars > 0 && isPlanting && currentState == TileState.Empty)
                 {
                     ChangeTileSprite(tilePosition, TileState.Planted);
                     isPlanting = false;
                 }
-                else if (stars > 0 && isWatering)
+                else if (stars > 0 && isWatering && currentState == TileState.Planted)
                 {
                     ChangeTileSprite(tilePosition, TileState.Watered);
                     isWatering = false;
+                } else if (isHarvesting && currentState == TileState.HarvestReady)
+                {
+                    ChangeTileSprite(tilePosition, TileState.Empty);
+                    isHarvesting = false;
+                    Debug.Log("harvesting ");
                 }
             }  else {
                 Debug.Log("Clicked outside valid range!");
                 isPlanting = false;
                 isWatering = false;
-                //HidePopup();
+                isHarvesting = false;
             }
 
             Debug.Log("Clicked on tile: " + clickedTile.name + " at position: " + tilePosition);
@@ -190,6 +219,8 @@ public class GameManager : MonoBehaviour
     {
         if (state == TileState.Empty) {
             overlayTilemap.SetTile(tilePosition, null);
+            currentTileStates.Remove(tilePosition);
+            AddStars(5);
         }
         else if (tileStateToSprite.ContainsKey(state)) {
             Tile newTile = ScriptableObject.CreateInstance<Tile>();
@@ -201,23 +232,31 @@ public class GameManager : MonoBehaviour
 
         UserData userData = FileStorage.LoadData();
 
+        // Find existing tile to keep the original plantedAt
+        TileData existing = userData.tileStates.Find(t => t.x == tilePosition.x && t.y == tilePosition.y);
+
         TileData newTileData = new TileData
         {
             x = tilePosition.x,
             y = tilePosition.y,
             state = state,
-            plantedAt = (state == TileState.Planted) ? System.DateTime.UtcNow.ToString("o") : null
+            // If planting, use current time; otherwise keep existing value
+            plantedAt = (state == TileState.Planted)
+                ? System.DateTime.UtcNow.ToString("o")
+                : existing?.plantedAt
         };
 
-        // Add or replace the tile data
         userData.tileStates.RemoveAll(t => t.x == tilePosition.x && t.y == tilePosition.y);
         userData.tileStates.Add(newTileData);
 
         FileStorage.SaveData(userData);
 
-
-        AddStars(-1);
+        if (state == TileState.Planted || state == TileState.Watered) 
+        {
+            AddStars(-1);
+        } 
     }
+
 
     void SaveTileStates()
     {
@@ -241,47 +280,14 @@ public class GameManager : MonoBehaviour
 
     void LoadTileStates()
     {
+        UpdateHarvestStates();
+
         UserData userData = FileStorage.LoadData();
         foreach (TileData data in userData.tileStates)
         {
             Vector3Int pos = new Vector3Int(data.x, data.y, 0);
-
-            if (data.state == TileState.Planted && !string.IsNullOrEmpty(data.plantedAt))
-            {
-                System.DateTime plantedTime;
-                if (System.DateTime.TryParse(data.plantedAt, null, System.Globalization.DateTimeStyles.RoundtripKind, out plantedTime))
-                {
-                    if ((System.DateTime.UtcNow - plantedTime).TotalHours >= 24)
-                    {
-                        data.state = TileState.HarvestReady;
-                    }
-                }
-            }
-            
             ChangeTileSprite(pos, data.state);
         }
-    }
-
-    void ShowPopup(Vector3Int position, TileBase clickedTile)
-    {
-        if (activePopup != null) {
-            HidePopup();
-        }
-        
-        
-        Vector3 worldPosition = groundTilemap.CellToWorld(position) + new Vector3(2f, 2f, 0); // Adjust popup position
-        worldPosition.x *= 20;
-        worldPosition.y *= 20;
-        activePopup = Instantiate(plantSeedsButton, worldPosition + new Vector3(0, 0, 1), Quaternion.identity);
-        activePopup.transform.SetParent(GameObject.Find("Canvas").transform, false);
-        
-        Button buttonInPopup = activePopup.GetComponentInChildren<Button>();
-        if (buttonInPopup)
-        {
-            buttonInPopup.onClick.RemoveAllListeners();
-            buttonInPopup.onClick.AddListener(OnPlantButtonClick);
-        } 
-
     }
 
     void HidePopup()
@@ -307,6 +313,16 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("Button clicked!!!!!");
         isWatering = true;
+
+        if (buttonClickSound != null) {
+            audioSource.PlayOneShot(buttonClickSound);
+        }
+    }
+
+    void OnHarvestButtonClick()
+    {
+        Debug.Log("Button clicked!!!!!");
+        isHarvesting = true;
 
         if (buttonClickSound != null) {
             audioSource.PlayOneShot(buttonClickSound);
@@ -342,6 +358,34 @@ public class GameManager : MonoBehaviour
             tutorialPopUps[1].SetActive(true);
         }
     }
+
+    void UpdateHarvestStates()
+    {
+        UserData userData = FileStorage.LoadData();
+        bool changesMade = false;
+
+        foreach (TileData data in userData.tileStates)
+        {
+            if (data.state == TileState.Watered && !string.IsNullOrEmpty(data.plantedAt))
+            {
+                if (System.DateTime.TryParse(data.plantedAt, null, System.Globalization.DateTimeStyles.RoundtripKind, out System.DateTime plantedTime))
+                {
+                    if ((System.DateTime.UtcNow - plantedTime).TotalMinutes >= 1) // Change to TotalHours >= 24 for real use
+                    {
+                        data.state = TileState.HarvestReady;
+                        changesMade = true;
+                    }
+                }
+            }
+        }
+
+        if (changesMade)
+        {
+            FileStorage.SaveData(userData);
+            LoadTileStates(); // Refresh visuals after updating states
+        }
+    }
+
 }
 
 
