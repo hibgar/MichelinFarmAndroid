@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 using System.IO;
 using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps; 
@@ -102,7 +103,8 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         // First: check if user tapped to dismiss tutorial popups
-        if (showTutorial && (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began || Input.GetMouseButtonDown(0)))
+        //if (showTutorial && (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began || Input.GetMouseButtonDown(0)))
+        if (showTutorial && ((Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame) || (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) ))
         {
             bool closedAny = false;
             foreach (GameObject popup in tutorialPopUps)
@@ -123,14 +125,23 @@ public class GameManager : MonoBehaviour
         }
 
         // Then: process tile interaction
-        if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
+        /* if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
         {
             DetectTileAtTouch(Input.GetTouch(0).position);
         }
         else if (Input.GetMouseButtonDown(0))
         {
             DetectTileAtTouch(Input.mousePosition);
+        } */
+        if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame)
+        {
+            DetectTileAtTouch(Touchscreen.current.primaryTouch.position.ReadValue());
         }
+        else if (Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            DetectTileAtTouch(Mouse.current.position.ReadValue());
+        }
+
 
         // Step 2 tutorial
         if (!tutorialStep2Shown && showTutorial && !tasksPanel.activeSelf && stars == 2)
