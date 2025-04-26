@@ -18,13 +18,15 @@ public class GameManager : MonoBehaviour
     public GameObject waterPlantButton;
     public GameObject harvestPlantButton;
     private GameObject activePopup;
-
+    public GameObject noStarsWarning;
     public GameObject tasksPanel;
 
     public Tilemap overlayTilemap;
     public Sprite seedPlantedSprite;
     public Sprite wateredSprite;
     public Sprite harvestReadySprite;
+    public GameObject cropHarvestedPopupPrefab; // Assign in Inspector
+
 
     private Dictionary<TileState, Sprite> tileStateToSprite;
     private Dictionary<Vector3Int, TileState> currentTileStates = new Dictionary<Vector3Int, TileState>();
@@ -43,7 +45,6 @@ public class GameManager : MonoBehaviour
     private bool tutorialStep2Shown = false;
     private bool finalTutorialShown = false;
 
-
     public bool showTutorial;
     public GameObject[] tutorialPopUps;
     UserData userData;
@@ -60,12 +61,15 @@ public class GameManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        // Determine if needs first-time tutorial
+        showTutorial = File.Exists(Path.Combine(Application.persistentDataPath, "userData.json")) == false;
+
         userData = FileStorage.LoadData();
         
         // to clear the farm tile data
-        userData.tileStates.Clear();
-        FileStorage.SaveData(userData);
-        Debug.Log("Tile data cleared!");
+        //userData.tileStates.Clear();
+        //FileStorage.SaveData(userData);
+        //Debug.Log("Tile data cleared!");
 
         tileStateToSprite = new Dictionary<TileState, Sprite>()
         {
@@ -76,9 +80,6 @@ public class GameManager : MonoBehaviour
         };
 
         LoadTileStates();
-
-        // Determine if needs first-time tutorial
-        showTutorial = File.Exists(Path.Combine(Application.persistentDataPath, "userData.json")) == false;
 
         stars = userData.starAmt;
         
@@ -122,6 +123,11 @@ public class GameManager : MonoBehaviour
                 showTutorial = false;
                 Debug.Log("Tutorial fully completed!");
             }
+        }
+
+        if ((Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame) || (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) && noStarsWarning.activeSelf)
+        {
+            noStarsWarning.SetActive(false);
         }
 
         // Then: process tile interaction
@@ -214,6 +220,20 @@ public class GameManager : MonoBehaviour
                     ChangeTileSprite(tilePosition, TileState.Empty);
                     isHarvesting = false;
                     Debug.Log("harvesting ");
+
+                    // Spawn popup at tile world position
+                    if (cropHarvestedPopupPrefab != null)
+                    {
+                        Vector3 worldPos = groundTilemap.CellToWorld(tilePosition);
+                        worldPos += new Vector3(0.5f, 0.5f, 0f); // Center the popup in the tile (optional)
+
+                        // Instantiate the popup at the correct position
+                        Instantiate(cropHarvestedPopupPrefab, worldPos, Quaternion.identity);
+                    }
+
+                } else if (stars == 0 && (isPlanting || isWatering)) 
+                {
+                    noStarsWarning.SetActive(true);
                 }
             }  else {
                 Debug.Log("Clicked outside valid range!");

@@ -3,7 +3,7 @@
     "m_SelectedProcess": {
         "deviceId": "R38M2028H4A",
         "name": "com.hibamughal.michelinfarm",
-        "processId": 15508,
+        "processId": 16919,
         "exited": false
     },
     "m_SelectedPriority": 0,
@@ -18,6 +18,12 @@
             "deviceId": "R38M2028H4A",
             "name": "com.hibamughal.michelinfarm",
             "processId": 15508,
+            "exited": false
+        },
+        {
+            "deviceId": "R38M2028H4A",
+            "name": "com.hibamughal.michelinfarm",
+            "processId": 16919,
             "exited": false
         }
     ],

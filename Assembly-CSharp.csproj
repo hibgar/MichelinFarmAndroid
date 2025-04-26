@@ -70,6 +70,7 @@
     <Compile Include="Assets/Scripts/UserData.cs" />
     <Compile Include="Assets/Scripts/LoadingScreenLogic.cs" />
     <Compile Include="Assets/Scripts/FileStorage.cs" />
+    <Compile Include="Assets/Scripts/HarvestingPopup.cs" />
     <Compile Include="Assets/TutorialInfo/Scripts/Readme.cs" />
     <Compile Include="Assets/Scripts/GameManager.cs" />
   </ItemGroup>
