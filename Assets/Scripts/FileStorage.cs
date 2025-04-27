@@ -11,7 +11,7 @@ public static class FileStorage
         if (File.Exists(filePath))
         {
             string json = File.ReadAllText(filePath);
-            Debug.Log(filePath);
+            //Debug.Log(filePath);
             return JsonUtility.FromJson<UserData>(json);
         }
         else
@@ -20,6 +20,7 @@ public static class FileStorage
             UserData newUserData = new UserData();
             newUserData.userId = GenerateUserId();
             newUserData.starAmt = 0;
+            newUserData.cornAmt = 0;
             newUserData.tileStates = GenerateDefaultTileStates();
             SaveData(newUserData);
             return newUserData;
@@ -40,6 +41,20 @@ public static class FileStorage
             UserData userData = JsonUtility.FromJson<UserData>(json);
 
             userData.starAmt = newStarAmt;
+
+            string updatedJson = JsonUtility.ToJson(userData, true);
+            File.WriteAllText(filePath, updatedJson);
+        }
+    }
+
+    public static void UpdateCornInJSON(int newCornAmt)
+    {
+        if (File.Exists(filePath))
+        {
+            string json = File.ReadAllText(filePath);
+            UserData userData = JsonUtility.FromJson<UserData>(json);
+
+            userData.cornAmt = newCornAmt;
 
             string updatedJson = JsonUtility.ToJson(userData, true);
             File.WriteAllText(filePath, updatedJson);

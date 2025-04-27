@@ -11,7 +11,8 @@ public class GameManager : MonoBehaviour
 
     public Text starCount;
     public int stars;
-
+    public Text cornQuantityText;
+    public int cornAmount;
     public Tilemap groundTilemap;
 
     public GameObject plantSeedsButton;
@@ -20,7 +21,7 @@ public class GameManager : MonoBehaviour
     private GameObject activePopup;
     public GameObject noStarsWarning;
     public GameObject tasksPanel;
-
+    public GameObject inventoryPanel;
     public Tilemap overlayTilemap;
     public Sprite seedPlantedSprite;
     public Sprite wateredSprite;
@@ -51,6 +52,7 @@ public class GameManager : MonoBehaviour
 
     private AudioSource audioSource;
     public AudioClip buttonClickSound;
+    public AudioClip cropHarvestSound;
 
     private float checkTimer = 0f;
     private float checkInterval = 5f; // Check every 5 seconds
@@ -82,7 +84,12 @@ public class GameManager : MonoBehaviour
         LoadTileStates();
 
         stars = userData.starAmt;
+        cornAmount = userData.cornAmt;
+        inventoryPanel.SetActive(false);
         
+        //to clear stars
+        AddStars(-70);
+
         Debug.Log("Star count successfully converted: " + stars);
         updateStarCountInUI();
 
@@ -93,6 +100,7 @@ public class GameManager : MonoBehaviour
         plantSeedsButton.GetComponentInChildren<Button>().onClick.AddListener(OnPlantButtonClick);
         waterPlantButton.GetComponentInChildren<Button>().onClick.AddListener(OnWaterButtonClick);
         harvestPlantButton.GetComponentInChildren<Button>().onClick.AddListener(OnHarvestButtonClick);
+
 
         if (showTutorial)
         {
@@ -229,6 +237,10 @@ public class GameManager : MonoBehaviour
 
                         // Instantiate the popup at the correct position
                         Instantiate(cropHarvestedPopupPrefab, worldPos, Quaternion.identity);
+                        AddCorn(1);
+                        if (cropHarvestSound != null) {
+                            audioSource.PlayOneShot(cropHarvestSound);
+                        }
                     }
 
                 } else if (stars == 0 && (isPlanting || isWatering)) 
@@ -251,7 +263,7 @@ public class GameManager : MonoBehaviour
         if (state == TileState.Empty) {
             overlayTilemap.SetTile(tilePosition, null);
             currentTileStates.Remove(tilePosition);
-            AddStars(5);
+            AddStars(2);
         }
         else if (tileStateToSprite.ContainsKey(state)) {
             Tile newTile = ScriptableObject.CreateInstance<Tile>();
@@ -378,6 +390,18 @@ public class GameManager : MonoBehaviour
     public void updateStarCountInUI()
     {
         starCount.text = stars.ToString();
+    }
+
+    public void AddCorn(int amount)
+    {
+        cornAmount += amount;
+        FileStorage.UpdateCornInJSON(cornAmount);
+    }
+
+    public void openInventory()
+    {
+        inventoryPanel.SetActive(true);
+        cornQuantityText.text = cornAmount.ToString();
     }
 
     public void OpenTasksPanelAndMaybeTutorial()

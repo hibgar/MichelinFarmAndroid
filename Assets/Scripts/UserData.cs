@@ -6,6 +6,7 @@ public class UserData
     public string userId;
     public List<TaskListManager.TasklistItem> taskList = new List<TaskListManager.TasklistItem>();
     public int starAmt;
+    public int cornAmt;
 
     public List<TileData> tileStates = new List<TileData>();
 
