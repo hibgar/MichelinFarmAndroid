@@ -1,9 +1,9 @@
 {
-    "m_SelectedDeviceId": "R38M2028H4A",
+    "m_SelectedDeviceId": "RF8RA0HP2KN",
     "m_SelectedProcess": {
-        "deviceId": "R38M2028H4A",
+        "deviceId": "RF8RA0HP2KN",
         "name": "com.hibamughal.michelinfarm",
-        "processId": 16919,
+        "processId": 813,
         "exited": false
     },
     "m_SelectedPriority": 0,
@@ -24,6 +24,18 @@
             "deviceId": "R38M2028H4A",
             "name": "com.hibamughal.michelinfarm",
             "processId": 16919,
+            "exited": false
+        },
+        {
+            "deviceId": "RF8RA0HP2KN",
+            "name": "com.hibamughal.michelinfarm",
+            "processId": 31234,
+            "exited": false
+        },
+        {
+            "deviceId": "RF8RA0HP2KN",
+            "name": "com.hibamughal.michelinfarm",
+            "processId": 813,
             "exited": false
         }
     ],

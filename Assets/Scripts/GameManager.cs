@@ -88,7 +88,7 @@ public class GameManager : MonoBehaviour
         inventoryPanel.SetActive(false);
         
         //to clear stars
-        AddStars(-70);
+        //AddStars(-stars);
 
         Debug.Log("Star count successfully converted: " + stars);
         updateStarCountInUI();
@@ -237,7 +237,7 @@ public class GameManager : MonoBehaviour
 
                         // Instantiate the popup at the correct position
                         Instantiate(cropHarvestedPopupPrefab, worldPos, Quaternion.identity);
-                        AddCorn(1);
+                        
                         if (cropHarvestSound != null) {
                             audioSource.PlayOneShot(cropHarvestSound);
                         }
@@ -260,45 +260,52 @@ public class GameManager : MonoBehaviour
 
     void ChangeTileSprite(Vector3Int tilePosition, TileState state)
     {
-        if (state == TileState.Empty) {
+        UserData userData = FileStorage.LoadData();
+
+        if (state == TileState.Empty)
+        {
             overlayTilemap.SetTile(tilePosition, null);
             currentTileStates.Remove(tilePosition);
-            AddStars(2);
+
+            // Only add stars if the previous state was HarvestReady
+            TileData existing = userData.tileStates.Find(t => t.x == tilePosition.x && t.y == tilePosition.y);
+            if (existing != null && existing.state == TileState.HarvestReady)
+            {
+                AddStars(2); // reward only if they harvested
+                AddCorn(1);
+            }
         }
-        else if (tileStateToSprite.ContainsKey(state)) {
+        else if (tileStateToSprite.ContainsKey(state))
+        {
             Tile newTile = ScriptableObject.CreateInstance<Tile>();
             newTile.sprite = tileStateToSprite[state];
             overlayTilemap.SetTile(tilePosition, newTile);
+
+            currentTileStates[tilePosition] = state;
+
+            if (state == TileState.Planted || state == TileState.Watered)
+            {
+                AddStars(-1); // cost when planting or watering
+            }
         }
 
-        currentTileStates[tilePosition] = state;
-
-        UserData userData = FileStorage.LoadData();
-
-        // Find existing tile to keep the original plantedAt
-        TileData existing = userData.tileStates.Find(t => t.x == tilePosition.x && t.y == tilePosition.y);
-
+        // Save the updated tile
         TileData newTileData = new TileData
         {
             x = tilePosition.x,
             y = tilePosition.y,
             state = state,
-            // If planting, use current time; otherwise keep existing value
             plantedAt = (state == TileState.Planted)
                 ? System.DateTime.UtcNow.ToString("o")
-                : existing?.plantedAt
+                : userData.tileStates.Find(t => t.x == tilePosition.x && t.y == tilePosition.y)?.plantedAt
         };
 
         userData.tileStates.RemoveAll(t => t.x == tilePosition.x && t.y == tilePosition.y);
         userData.tileStates.Add(newTileData);
 
         FileStorage.SaveData(userData);
-
-        if (state == TileState.Planted || state == TileState.Watered) 
-        {
-            AddStars(-1);
-        } 
     }
+
 
 
     void SaveTileStates()
@@ -425,7 +432,7 @@ public class GameManager : MonoBehaviour
             {
                 if (System.DateTime.TryParse(data.plantedAt, null, System.Globalization.DateTimeStyles.RoundtripKind, out System.DateTime plantedTime))
                 {
-                    if ((System.DateTime.UtcNow - plantedTime).TotalMinutes >= 1) // Change to TotalHours >= 24 for real use
+                    if ((System.DateTime.UtcNow - plantedTime).TotalHours >= 24) // Change to TotalHours >= 24 for real use
                     {
                         data.state = TileState.HarvestReady;
                         changesMade = true;
