@@ -1372,6 +1372,10 @@
       <HintPath>Library/ScriptAssemblies/Unity.AdaptivePerformance.Simulator.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Unity.EditorCoroutines.Editor">
+      <HintPath>Library/ScriptAssemblies/Unity.EditorCoroutines.Editor.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.2D.Tilemap.Extras">
       <HintPath>Library/ScriptAssemblies/Unity.2D.Tilemap.Extras.dll</HintPath>
       <Private>False</Private>
@@ -1390,6 +1394,10 @@
     </Reference>
     <Reference Include="Unity.Mathematics">
       <HintPath>Library/ScriptAssemblies/Unity.Mathematics.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.Play.Publisher.Editor">
+      <HintPath>Library/ScriptAssemblies/Unity.Play.Publisher.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.RenderPipelines.Core.Editor">
@@ -1466,6 +1474,10 @@
     </Reference>
     <Reference Include="Unity.InputSystem">
       <HintPath>Library/ScriptAssemblies/Unity.InputSystem.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.InternalAPIEditorBridgeDev.001">
+      <HintPath>Library/ScriptAssemblies/Unity.InternalAPIEditorBridgeDev.001.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>

@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 public class GameManager : MonoBehaviour
 {
-
+    public Transform homeCanvasTransform;
     public Text starCount;
     public int stars;
     public Text cornQuantityText;
@@ -20,8 +20,10 @@ public class GameManager : MonoBehaviour
     public GameObject harvestPlantButton;
     private GameObject activePopup;
     public GameObject noStarsWarning;
+    public GameObject fertilizerRefundedWarning;
     public GameObject tasksPanel;
     public GameObject inventoryPanel;
+    public GameObject storePanel;
     public Tilemap overlayTilemap;
     public Sprite seedPlantedSprite;
     public Sprite wateredSprite;
@@ -45,6 +47,8 @@ public class GameManager : MonoBehaviour
     private bool isHarvesting = false;
     private bool tutorialStep2Shown = false;
     private bool finalTutorialShown = false;
+    private bool fertilizerPurchased = false;
+
 
     public bool showTutorial;
     public GameObject[] tutorialPopUps;
@@ -63,6 +67,7 @@ public class GameManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        //Screen.SetResolution(1080, 1920, false);
         // Determine if needs first-time tutorial
         showTutorial = File.Exists(Path.Combine(Application.persistentDataPath, "userData.json")) == false;
 
@@ -86,6 +91,8 @@ public class GameManager : MonoBehaviour
         stars = userData.starAmt;
         cornAmount = userData.cornAmt;
         inventoryPanel.SetActive(false);
+        storePanel.SetActive(false);
+        fertilizerRefundedWarning.SetActive(false);
         
         //to clear stars
         //AddStars(-stars);
@@ -133,10 +140,10 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if ((Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame) || (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) && noStarsWarning.activeSelf)
+        /*if ((Touchscreen.current != null && Touchscreen.current.primaryTouch.press.wasPressedThisFrame) || (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame) && noStarsWarning.activeSelf)
         {
             noStarsWarning.SetActive(false);
-        }
+        }*/
 
         // Then: process tile interaction
         /* if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began)
@@ -198,7 +205,7 @@ public class GameManager : MonoBehaviour
     // Detects tile at touch position
     void DetectTileAtTouch(Vector2 screenPosition)
     {
-        if (!isPlanting && !isWatering && !isHarvesting) return;
+        if (!isPlanting && !isWatering && !isHarvesting && !fertilizerPurchased) return;
 
         Vector3 worldPoint = Camera.main.ScreenToWorldPoint(screenPosition);
         worldPoint.z = 0; // Ensures we stay in the correct 2D plane
@@ -213,6 +220,28 @@ public class GameManager : MonoBehaviour
             if (tilePosition.x >= -2 && tilePosition.x <= 1 && tilePosition.y >= -2 && tilePosition.y <= 1)
             {
                 currentTileStates.TryGetValue(tilePosition, out TileState currentState);
+
+
+
+                if (fertilizerPurchased)
+                {
+                    if (currentState == TileState.Planted || currentState == TileState.Watered)
+                    {
+                        // Success: Fertilize instantly
+                        ChangeTileSprite(tilePosition, TileState.HarvestReady);
+                        fertilizerPurchased = false;
+                        Debug.Log("Tile instantly fertilized to HarvestReady!");
+                        return; // Done
+                    }
+                    else
+                    {
+                        // Failed: Refund stars and cancel fertilizer
+                        refundFertilizer();
+                        // Continue to allow normal planting or other action
+                    }
+                }
+
+
 
                 if (stars > 0 && isPlanting && currentState == TileState.Empty)
                 {
@@ -238,6 +267,11 @@ public class GameManager : MonoBehaviour
                         // Instantiate the popup at the correct position
                         Instantiate(cropHarvestedPopupPrefab, worldPos, Quaternion.identity);
                         
+                        //GameObject popup = Instantiate(cropHarvestedPopupPrefab, homeCanvasTransform);
+
+                        //Vector2 screenPos = Camera.main.WorldToScreenPoint(worldPos);
+                        //popup.GetComponent<RectTransform>().position = screenPos;
+
                         if (cropHarvestSound != null) {
                             audioSource.PlayOneShot(cropHarvestSound);
                         }
@@ -245,7 +279,7 @@ public class GameManager : MonoBehaviour
 
                 } else if (stars == 0 && (isPlanting || isWatering)) 
                 {
-                    noStarsWarning.SetActive(true);
+                    StartCoroutine(ShowTemporarily(noStarsWarning, 5f));
                 }
             }  else {
                 Debug.Log("Clicked outside valid range!");
@@ -351,7 +385,10 @@ public class GameManager : MonoBehaviour
 
     void OnPlantButtonClick()
     {
-        Debug.Log("Button clicked!!!!!");
+        if (fertilizerPurchased) {
+            refundFertilizer();
+        }
+        Debug.Log("Plant button clicked!!!!!");
         isPlanting = true;
 
         if (buttonClickSound != null) {
@@ -361,16 +398,23 @@ public class GameManager : MonoBehaviour
 
     void OnWaterButtonClick()
     {
-        Debug.Log("Button clicked!!!!!");
+        if (fertilizerPurchased) {
+            refundFertilizer();
+        }
+        Debug.Log("Water button clicked!!!!!");
         isWatering = true;
 
         if (buttonClickSound != null) {
             audioSource.PlayOneShot(buttonClickSound);
-        }
+        }   
+        
     }
 
     void OnHarvestButtonClick()
     {
+        if (fertilizerPurchased) {
+            refundFertilizer();
+        }
         Debug.Log("Button clicked!!!!!");
         isHarvesting = true;
 
@@ -410,6 +454,37 @@ public class GameManager : MonoBehaviour
         inventoryPanel.SetActive(true);
         cornQuantityText.text = cornAmount.ToString();
     }
+
+    public void openStore()
+    {
+        storePanel.SetActive(true);
+    }
+
+    public void buyFertilizer()
+    {
+        if (stars >= 5){
+            Debug.Log("bought fertilizer");
+            storePanel.SetActive(false);
+            fertilizerPurchased = true;
+            AddStars(-5);
+        }
+    }
+
+    private void refundFertilizer()
+    {
+        AddStars(5); // Refund 5 stars
+        fertilizerPurchased = false;
+        Debug.Log("Fertilizer canceled: no plant to fertilize. Stars refunded.");
+        StartCoroutine(ShowTemporarily(fertilizerRefundedWarning, 6f));
+    }
+
+    private IEnumerator<WaitForSeconds> ShowTemporarily(GameObject obj, float seconds)
+    {
+        obj.SetActive(true);
+        yield return new WaitForSeconds(seconds);
+        obj.SetActive(false);
+    }
+
 
     public void OpenTasksPanelAndMaybeTutorial()
     {

@@ -548,7 +548,23 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      coins-chests-etc-2-0_0: -1110126541007599292
+      coins-chests-etc-2-0_1: 6677371199585168653
+      coins-chests-etc-2-0_10: 5781152556637011241
+      coins-chests-etc-2-0_11: 47853134441211810
+      coins-chests-etc-2-0_12: -8547117569818187076
+      coins-chests-etc-2-0_13: 5986398663914978439
+      coins-chests-etc-2-0_14: -7693507295091667559
+      coins-chests-etc-2-0_15: 8435045845211337512
+      coins-chests-etc-2-0_2: 3179439825839413324
+      coins-chests-etc-2-0_3: -4783615127557352424
+      coins-chests-etc-2-0_4: 3546711308377936960
+      coins-chests-etc-2-0_5: -2976798012191111905
+      coins-chests-etc-2-0_6: -384133781660307682
+      coins-chests-etc-2-0_7: 7428233801177773207
+      coins-chests-etc-2-0_8: -6885073698904915356
+      coins-chests-etc-2-0_9: -5053005104965179263
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

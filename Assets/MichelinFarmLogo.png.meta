@@ -173,7 +173,8 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable: {}
+    nameFileIdTable:
+      MichelinFarmLogo_0: -8342689744736921499
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

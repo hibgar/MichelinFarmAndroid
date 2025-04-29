@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <title>Unity WebGL Mobile Layout</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #222;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        #unity-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 1080px;
+            height: 1920px;
+            max-width: 100%;
+            max-height: 100%;
+            background: black;
+        }
+        #unity-canvas {
+            width: 100%;
+            height: 100%;
+            background: black;
+        }
+    </style>
+</head>
+<body>
+    <div id="unity-container">
+        <canvas id="unity-canvas"></canvas>
+    </div>
+
+    <script src="%UNITY_WEBGL_LOADER_URL%"></script>
+    <script>
+        createUnityInstance(document.querySelector("#unity-canvas"), {
+            dataUrl: "%UNITY_DATA_URL%",
+            frameworkUrl: "%UNITY_FRAMEWORK_URL%",
+            codeUrl: "%UNITY_CODE_URL%",
+            streamingAssetsUrl: "StreamingAssets",
+            companyName: "%COMPANY_NAME%",
+            productName: "%PRODUCT_NAME%",
+            productVersion: "%PRODUCT_VERSION%",
+            devicePixelRatio: 1,
+            matchWebGLToCanvasSize: false
+        });
+    </script>
+</body>
+</html>
+

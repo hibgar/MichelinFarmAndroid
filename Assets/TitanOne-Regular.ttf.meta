@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: b70f3a2fc36d607ccab3e4e4b1bdb04f
+guid: 6cb1c4270ddfa60ef8d56ee65f320098
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Gagalin
+  - Titan One
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0
